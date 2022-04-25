@@ -32,7 +32,7 @@ namespace depthai_examples{
             std::string cameraParamUri;
             std::string monoResolution = "720p";
             int badParams = 0;
-            bool lrcheck, extended, subpixel, enableDepth;
+            bool lrcheck, extended, subpixel, enableDepth, publishPointcloud;
             int confidence = 200;
             int LRchecktresh = 5;
 
@@ -45,6 +45,7 @@ namespace depthai_examples{
             badParams += !pnh.getParam("confidence",  confidence);
             badParams += !pnh.getParam("LRchecktresh",  LRchecktresh);
             badParams += !pnh.getParam("monoResolution",  monoResolution);
+            badParams += !pnh.getParam("publishPointcloud",  publishPointcloud);
             
             if (badParams > 0)
             {   
@@ -121,7 +122,14 @@ namespace depthai_examples{
                                                                                              std::placeholders::_2) , 
                                                                                              30,
                                                                                              rightCameraInfo,
-                                                                                             "right");
+                                                                                             "right",
+                                                                                             publishPointcloud,
+                                                                                             std::bind(&dai::rosBridge::ImageConverter::toRosPointcloudMsg, 
+                                                                                             rightConverter.get(), // since the converter has the same frame name
+                                                                                                              // and image type is also same we can reuse it
+                                                                                             std::placeholders::_1, 
+                                                                                             std::placeholders::_2,
+                                                                                             std::placeholders::_3));
 
             rightPublish->addPublisherCallback();
 
@@ -137,7 +145,14 @@ namespace depthai_examples{
                                                                              std::placeholders::_2) , 
                                                                              30,
                                                                              rightCameraInfo,
-                                                                             "stereo");
+                                                                             "stereo",
+                                                                             publishPointcloud,
+                                                                             std::bind(&dai::rosBridge::ImageConverter::toRosPointcloudMsg, 
+                                                                             rightConverter.get(), // since the converter has the same frame name
+                                                                                              // and image type is also same we can reuse it
+                                                                             std::placeholders::_1, 
+                                                                             std::placeholders::_2,
+                                                                             std::placeholders::_3));
 
             depthPublish->addPublisherCallback();
 
@@ -193,8 +208,10 @@ namespace depthai_examples{
         // MonoCamera
         monoLeft->setResolution(monoResolution);
         monoLeft->setBoardSocket(dai::CameraBoardSocket::LEFT);
+        monoLeft->setFps(10);
         monoRight->setResolution(monoResolution);
         monoRight->setBoardSocket(dai::CameraBoardSocket::RIGHT);
+        monoRight->setFps(10);
 
         // int maxDisp = 96;
         // if (extended) maxDisp *= 2;
