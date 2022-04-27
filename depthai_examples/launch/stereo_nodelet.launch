@@ -26,6 +26,15 @@
     <arg name="publishPointcloud"     default="true" /> 
     <arg name="colorPointcloud"       default="false" />
 
+    <arg name="useVoxelFilter"        default="false" />
+    <arg name="voxelLeafX"            default="0.06" />
+    <arg name="voxelLeafY"            default="0.06" />
+    <arg name="voxelLeafZ"            default="0.06" />
+    <arg name="minPointsPerVoxel"     default="50" />
+    <arg name="voxelFilterFieldName"  default="" /> <!-- options: x, y, z -->
+    <arg name="voxelFilterMinLimit"   default="0.0" />
+    <arg name="voxelFilterMaxLimit"   default="5.0" />
+
     <include file="$(find depthai_bridge)/launch/urdf.launch">
         <arg name="base_frame"      value="$(arg  base_frame)"  />
         <arg name="parent_frame"    value="$(arg  parent_frame)"/>
@@ -57,6 +66,14 @@
         <param name="fps" value="$(arg fps)"/>
         <param name="publishPointcloud" value="$(arg publishPointcloud)"/>
         <param name="colorPointcloud" value="$(arg colorPointcloud)"/>
+        <param name="voxelLeafX" value="$(arg voxelLeafX)"/>
+        <param name="voxelLeafY" value="$(arg voxelLeafY)"/>
+        <param name="voxelLeafZ" value="$(arg voxelLeafZ)"/>
+        <param name="minPointsPerVoxel" value="$(arg minPointsPerVoxel)"/>
+        <param name="voxelFilterFieldName" value="$(arg voxelFilterFieldName)"/>
+        <param name="voxelFilterMinLimit" value="$(arg voxelFilterMinLimit)"/>
+        <param name="voxelFilterMaxLimit" value="$(arg voxelFilterMaxLimit)"/>
+        <param name="useVoxelFilter" value="$(arg useVoxelFilter)"/>
     </node>
 
     <node if="$(eval arg('publishPointcloud') == false)" pkg="nodelet" type="nodelet" name="depth_image_convertion_nodelet"

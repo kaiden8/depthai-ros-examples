@@ -37,6 +37,12 @@ namespace depthai_examples{
             int LRchecktresh = 5;
             int fps;
 
+            bool useVoxelFilter;
+            float voxelLeafX, voxelLeafY, voxelLeafZ;
+            int minPointsPerVoxel;
+            std::string voxelFilterFieldName;
+            double voxelFilterMinLimit, voxelFilterMaxLimit;
+
             badParams += !pnh.getParam("tf_prefix", tfPrefix);
             badParams += !pnh.getParam("camera_param_uri", cameraParamUri);
             badParams += !pnh.getParam("mode", mode);
@@ -49,6 +55,14 @@ namespace depthai_examples{
             badParams += !pnh.getParam("fps",  fps);
             badParams += !pnh.getParam("publishPointcloud",  publishPointcloud);
             badParams += !pnh.getParam("colorPointcloud",  colorPointcloud);
+            badParams += !pnh.getParam("voxelLeafX",  voxelLeafX);
+            badParams += !pnh.getParam("voxelLeafY",  voxelLeafY);
+            badParams += !pnh.getParam("voxelLeafZ",  voxelLeafZ);
+            badParams += !pnh.getParam("minPointsPerVoxel",  minPointsPerVoxel);
+            badParams += !pnh.getParam("voxelFilterFieldName", voxelFilterFieldName);
+            badParams += !pnh.getParam("voxelFilterMinLimit",  voxelFilterMinLimit);
+            badParams += !pnh.getParam("voxelFilterMaxLimit",  voxelFilterMaxLimit);
+            badParams += !pnh.getParam("useVoxelFilter",  useVoxelFilter);
             
             if (badParams > 0)
             {   
@@ -67,6 +81,18 @@ namespace depthai_examples{
             int monoWidth, monoHeight;
             std::tie(pipeline, monoWidth, monoHeight) = createPipeline(enableDepth, lrcheck, extended, subpixel, confidence, LRchecktresh, monoResolution, fps, colorPointcloud);
             _dev = std::make_unique<dai::Device>(pipeline);
+
+            // *** Pointcloud Filter Setup *** // 
+
+            std::shared_ptr<dai::rosBridge::ImageConverter::Filters> filters = std::make_shared<dai::rosBridge::ImageConverter::Filters>();
+            filters->voxelGrid.leafX = voxelLeafX;
+            filters->voxelGrid.leafY = voxelLeafY;
+            filters->voxelGrid.leafZ = voxelLeafZ;
+            filters->voxelGrid.minPointsPerVoxel = minPointsPerVoxel;
+            filters->voxelGrid.filterFieldName = voxelFilterFieldName;
+            filters->voxelGrid.filterMinLimit = voxelFilterMinLimit;
+            filters->voxelGrid.filterMaxLimit = voxelFilterMaxLimit;
+            filters->voxelGrid.useFilter = useVoxelFilter;
 
             // auto leftQueue = _dev->getOutputQueue("left", 30, false);
             // auto rightQueue = _dev->getOutputQueue("right", 30, false);
@@ -98,7 +124,7 @@ namespace depthai_examples{
                 auto imgQueue = _dev->getOutputQueue("rgb", 30, false);
 
                 int colorWidth = 1280, colorHeight = 720;
-                rgbConverter = std::make_unique<dai::rosBridge::ImageConverter>(tfPrefix + "_rgb_camera_optical_frame", false);
+                rgbConverter = std::make_unique<dai::rosBridge::ImageConverter>(tfPrefix + "_rgb_camera_optical_frame", false, filters);
                 auto rgbCameraInfo = rgbConverter->calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::RGB, colorWidth, colorHeight);
                 
                 rgbPublish = std::make_unique<dai::rosBridge::BridgePublisher<sensor_msgs::Image, dai::ImgFrame>>
@@ -169,7 +195,7 @@ namespace depthai_examples{
                 // bridgePublish.startPublisherThread();
                 leftPublish->addPublisherCallback();
 
-                rightConverter = std::make_unique<dai::rosBridge::ImageConverter >(tfPrefix + "_right_camera_optical_frame", true);
+                rightConverter = std::make_unique<dai::rosBridge::ImageConverter >(tfPrefix + "_right_camera_optical_frame", true, filters);
                 auto rightCameraInfo = rightConverter->calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::RIGHT, monoWidth, monoHeight); 
 
                 rightPublish = std::make_unique<dai::rosBridge::BridgePublisher<sensor_msgs::Image, dai::ImgFrame>>
