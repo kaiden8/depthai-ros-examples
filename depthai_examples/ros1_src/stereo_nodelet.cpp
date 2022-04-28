@@ -37,11 +37,17 @@ namespace depthai_examples{
             int LRchecktresh = 5;
             int fps;
 
+            // *** Voxel Filter Params ***//
             bool useVoxelFilter;
             float voxelLeafX, voxelLeafY, voxelLeafZ;
             int minPointsPerVoxel;
             std::string voxelFilterFieldName;
             double voxelFilterMinLimit, voxelFilterMaxLimit;
+
+            // *** Statistical Outlier Removal params ***//
+            bool useSorFilter, sorKeepOrganized;
+            int  sorMeanK;
+            double sorStddevMulThresh;
 
             badParams += !pnh.getParam("tf_prefix", tfPrefix);
             badParams += !pnh.getParam("camera_param_uri", cameraParamUri);
@@ -55,6 +61,7 @@ namespace depthai_examples{
             badParams += !pnh.getParam("fps",  fps);
             badParams += !pnh.getParam("publishPointcloud",  publishPointcloud);
             badParams += !pnh.getParam("colorPointcloud",  colorPointcloud);
+            badParams += !pnh.getParam("useVoxelFilter",  useVoxelFilter);
             badParams += !pnh.getParam("voxelLeafX",  voxelLeafX);
             badParams += !pnh.getParam("voxelLeafY",  voxelLeafY);
             badParams += !pnh.getParam("voxelLeafZ",  voxelLeafZ);
@@ -62,7 +69,10 @@ namespace depthai_examples{
             badParams += !pnh.getParam("voxelFilterFieldName", voxelFilterFieldName);
             badParams += !pnh.getParam("voxelFilterMinLimit",  voxelFilterMinLimit);
             badParams += !pnh.getParam("voxelFilterMaxLimit",  voxelFilterMaxLimit);
-            badParams += !pnh.getParam("useVoxelFilter",  useVoxelFilter);
+            badParams += !pnh.getParam("useSorFilter",  useSorFilter);
+            badParams += !pnh.getParam("sorKeepOrganized",  sorKeepOrganized);
+            badParams += !pnh.getParam("sorMeanK",  sorMeanK);
+            badParams += !pnh.getParam("sorStddevMulThresh",  sorStddevMulThresh);
             
             if (badParams > 0)
             {   
@@ -85,6 +95,8 @@ namespace depthai_examples{
             // *** Pointcloud Filter Setup *** // 
 
             std::shared_ptr<dai::rosBridge::ImageConverter::Filters> filters = std::make_shared<dai::rosBridge::ImageConverter::Filters>();
+
+            // Voxel
             filters->voxelGrid.leafX = voxelLeafX;
             filters->voxelGrid.leafY = voxelLeafY;
             filters->voxelGrid.leafZ = voxelLeafZ;
@@ -93,6 +105,14 @@ namespace depthai_examples{
             filters->voxelGrid.filterMinLimit = voxelFilterMinLimit;
             filters->voxelGrid.filterMaxLimit = voxelFilterMaxLimit;
             filters->voxelGrid.useFilter = useVoxelFilter;
+
+            // StatisticalOutlierRemoval
+            filters->statisticalOutlierRemoval.useFilter = useSorFilter;
+            filters->statisticalOutlierRemoval.keepOrganized = sorKeepOrganized;
+            filters->statisticalOutlierRemoval.meanK = sorMeanK;
+            filters->statisticalOutlierRemoval.stddevMulThresh = sorStddevMulThresh;
+
+            // END*** Pointcloud Filter Setup *** // 
 
             // auto leftQueue = _dev->getOutputQueue("left", 30, false);
             // auto rightQueue = _dev->getOutputQueue("right", 30, false);
@@ -123,7 +143,8 @@ namespace depthai_examples{
             if (colorPointcloud) {
                 auto imgQueue = _dev->getOutputQueue("rgb", 30, false);
 
-                int colorWidth = 1280, colorHeight = 720;
+                //TODO determine size of color image based on rosParam
+                int colorWidth = 640, colorHeight = 360;
                 rgbConverter = std::make_unique<dai::rosBridge::ImageConverter>(tfPrefix + "_rgb_camera_optical_frame", false, filters);
                 auto rgbCameraInfo = rgbConverter->calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::RGB, colorWidth, colorHeight);
                 
@@ -258,6 +279,21 @@ namespace depthai_examples{
         auto stereo      = pipeline.create<dai::node::StereoDepth>();
         auto xoutDepth   = pipeline.create<dai::node::XLinkOut>();
 
+        // StereoDepth
+        stereo->setDefaultProfilePreset(dai::node::StereoDepth::PresetMode::HIGH_ACCURACY);
+        stereo->initialConfig.setConfidenceThreshold(confidence);
+        stereo->initialConfig.setLeftRightCheckThreshold(LRchecktresh);
+        stereo->setRectifyEdgeFillColor(0); // black, to better see the cutout
+
+        stereo->setLeftRightCheck(lrcheck);
+        stereo->setExtendedDisparity(extended);
+        stereo->setSubpixel(subpixel);
+
+        if (colorPointcloud) {
+            stereo->setDepthAlign(dai::CameraBoardSocket::RGB);
+        }
+        auto config = stereo->initialConfig.get();
+
         if (colorPointcloud) {
             auto camRgb               = pipeline.create<dai::node::ColorCamera>();
             auto xoutRgb              = pipeline.create<dai::node::XLinkOut>();
@@ -265,9 +301,22 @@ namespace depthai_examples{
             camRgb->setBoardSocket(dai::CameraBoardSocket::RGB);
             camRgb->setResolution(dai::ColorCameraProperties::SensorResolution::THE_1080_P);
             camRgb->setFps(10);
-            camRgb->setIspScale(2, 3);
+            //TODO set scale based on rosParam and decimation of depth image
+            // would video work better for this?
+            camRgb->setIspScale(1, 3);
             camRgb->initialControl.setManualFocus(135);
             camRgb->isp.link(xoutRgb->input);
+
+            // TODO add filters to be enabled and controlled from rosParam
+            config.postProcessing.speckleFilter.enable = true;
+            config.postProcessing.speckleFilter.speckleRange = 100;
+            // config.postProcessing.temporalFilter.enable = true;
+            config.postProcessing.spatialFilter.enable = true;
+            config.postProcessing.spatialFilter.holeFillingRadius = 2;
+            config.postProcessing.spatialFilter.numIterations = 1;
+            config.postProcessing.thresholdFilter.minRange = 0;
+            config.postProcessing.thresholdFilter.maxRange = 15000;
+            config.postProcessing.decimationFilter.decimationFactor = 2;
         } else {
             // XLinkOut
             auto xoutLeft    = pipeline.create<dai::node::XLinkOut>();
@@ -277,7 +326,20 @@ namespace depthai_examples{
 
             stereo->syncedLeft.link(xoutLeft->input);
             stereo->syncedRight.link(xoutRight->input);
+
+            // TODO add filters to be enabled and controlled from rosParam
+            config.postProcessing.speckleFilter.enable = true;
+            config.postProcessing.speckleFilter.speckleRange = 100;
+            // config.postProcessing.temporalFilter.enable = true;
+            config.postProcessing.spatialFilter.enable = true;
+            config.postProcessing.spatialFilter.holeFillingRadius = 2;
+            config.postProcessing.spatialFilter.numIterations = 1;
+            config.postProcessing.thresholdFilter.minRange = 0;
+            config.postProcessing.thresholdFilter.maxRange = 15000;
+            config.postProcessing.decimationFilter.decimationFactor = 1;
         }
+
+        stereo->initialConfig.set(config);
 
         if (withDepth) {
             xoutDepth->setStreamName("depth");
@@ -321,38 +383,9 @@ namespace depthai_examples{
         // if (extended) maxDisp *= 2;
         // if (subpixel) maxDisp *= 32; // 5 bits fractional disparity
 
-        // StereoDepth
-        stereo->initialConfig.setConfidenceThreshold(confidence);
-        stereo->initialConfig.setLeftRightCheckThreshold(LRchecktresh);
-        stereo->setRectifyEdgeFillColor(0); // black, to better see the cutout
-
-        stereo->setLeftRightCheck(lrcheck);
-        stereo->setExtendedDisparity(extended);
-        stereo->setSubpixel(subpixel);
-
-        if (colorPointcloud) {
-            stereo->setDepthAlign(dai::CameraBoardSocket::RGB);
-        }
-
-        // auto config = stereo->initialConfig.get();
-        // // config.postProcessing.decimationFilter.enable = true;
-        // config.postProcessing.speckleFilter.enable = true;
-        // config.postProcessing.speckleFilter.speckleRange = 100;
-        // // config.postProcessing.temporalFilter.enable = true;
-        // config.postProcessing.spatialFilter.enable = true;
-        // config.postProcessing.spatialFilter.holeFillingRadius = 2;
-        // config.postProcessing.spatialFilter.numIterations = 1;
-        // config.postProcessing.thresholdFilter.minRange = 400;
-        // config.postProcessing.thresholdFilter.maxRange = 15000;
-        // config.postProcessing.decimationFilter.decimationFactor = 2;
-        // stereo->initialConfig.set(config);
-
         // Link plugins CAM -> STEREO -> XLINK
         monoLeft->out.link(stereo->left);
         monoRight->out.link(stereo->right);
-
-        // stereo->syncedLeft.link(xoutLeft->input);
-        // stereo->syncedRight.link(xoutRight->input);
 
         if(withDepth){
             stereo->depth.link(xoutDepth->input);

@@ -20,20 +20,25 @@
     <arg name="camera_param_uri"      default="package://depthai_examples/params/camera" />
     <arg name="confidence"            default="200" /> 
     <arg name="LRchecktresh"          default="5" /> 
-    <arg name="monoResolution"        default="720p" /> 
-    <arg name="fps"                   default="10" />
+    <arg name="monoResolution"        default="720p" /> <!-- options: (no color => 400p, 480p) (with color => 720p) -->
+    <arg name="fps"                   default="5" />
 
     <arg name="publishPointcloud"     default="true" /> 
-    <arg name="colorPointcloud"       default="false" />
+    <arg name="colorPointcloud"       default="true" />
 
-    <arg name="useVoxelFilter"        default="false" />
-    <arg name="voxelLeafX"            default="0.06" />
-    <arg name="voxelLeafY"            default="0.06" />
-    <arg name="voxelLeafZ"            default="0.06" />
-    <arg name="minPointsPerVoxel"     default="50" />
+    <arg name="useVoxelFilter"        default="true" />
+    <arg name="voxelLeafX"            default="0.02" />
+    <arg name="voxelLeafY"            default="0.02" />
+    <arg name="voxelLeafZ"            default="0.02" />
+    <arg name="minPointsPerVoxel"     default="10" />
     <arg name="voxelFilterFieldName"  default="" /> <!-- options: x, y, z -->
     <arg name="voxelFilterMinLimit"   default="0.0" />
     <arg name="voxelFilterMaxLimit"   default="5.0" />
+
+    <arg name="useSorFilter"        default="true" />
+    <arg name="sorKeepOrganized"    default="true" />
+    <arg name="sorMeanK"            default="50" />
+    <arg name="sorStddevMulThresh"  default="0.3" />
 
     <include file="$(find depthai_bridge)/launch/urdf.launch">
         <arg name="base_frame"      value="$(arg  base_frame)"  />
@@ -74,6 +79,10 @@
         <param name="voxelFilterMinLimit" value="$(arg voxelFilterMinLimit)"/>
         <param name="voxelFilterMaxLimit" value="$(arg voxelFilterMaxLimit)"/>
         <param name="useVoxelFilter" value="$(arg useVoxelFilter)"/>
+        <param name="useSorFilter" value="$(arg useSorFilter)"/>
+        <param name="sorKeepOrganized" value="$(arg sorKeepOrganized)"/>
+        <param name="sorMeanK" value="$(arg sorMeanK)"/>
+        <param name="sorStddevMulThresh" value="$(arg sorStddevMulThresh)"/>
     </node>
 
     <node if="$(eval arg('publishPointcloud') == false)" pkg="nodelet" type="nodelet" name="depth_image_convertion_nodelet"
