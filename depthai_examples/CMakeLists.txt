@@ -35,6 +35,8 @@ file(DOWNLOAD "https://artifacts.luxonis.com/artifactory/luxonis-depthai-data-lo
   EXPECTED_HASH SHA1=219d949610a5760e62a8458941e1300b81c3fe4a
   TLS_VERIFY ON)
 
+find_package(PCL 1.2 REQUIRED)
+
 find_package(ament_cmake QUIET)
 if ( ament_cmake_FOUND )
   message(STATUS "------------------------------------------")
