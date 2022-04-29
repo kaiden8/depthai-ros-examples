@@ -80,6 +80,7 @@ namespace depthai_examples{
                 throw std::runtime_error("Couldn't find %d of the parameters");
             }
 
+            //TODO add disparity mode back
             if(mode == "depth"){
                 enableDepth = true;
             }

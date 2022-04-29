@@ -34,6 +34,25 @@ def generate_launch_description():
     confidence     = LaunchConfiguration('confidence', default = 200)
     LRchecktresh   = LaunchConfiguration('LRchecktresh', default = 5)
     monoResolution = LaunchConfiguration('monoResolution',  default = '720p')
+    fps            = LaunchConfiguration('fps',  default = 10)
+
+    publishPointcloud = LaunchConfiguration('publishPointcloud',  default = True)
+    colorPointcloud   = LaunchConfiguration('colorPointcloud',    default = True)
+
+    useVoxelFilter       = LaunchConfiguration('useVoxelFilter',        default = True)
+    voxelLeafX           = LaunchConfiguration('voxelLeafX',            default = 0.02)
+    voxelLeafY           = LaunchConfiguration('voxelLeafY',            default = 0.02)
+    voxelLeafZ           = LaunchConfiguration('voxelLeafZ',            default = 0.02)
+    minPointsPerVoxel    = LaunchConfiguration('minPointsPerVoxel',     default = 10)
+    voxelFilterFieldName = LaunchConfiguration('voxelFilterFieldName',  default = '')
+    voxelFilterMinLimit  = LaunchConfiguration('voxelFilterMinLimit',   default = 0.0)
+    voxelFilterMaxLimit  = LaunchConfiguration('voxelFilterMaxLimit',   default = 5.0)
+
+    useSorFilter       = LaunchConfiguration('useSorFilter',        default = True)
+    sorKeepOrganized   = LaunchConfiguration('sorKeepOrganized',    default = True)
+    sorMeanK           = LaunchConfiguration('sorMeanK',            default = 50)
+    sorStddevMulThresh = LaunchConfiguration('sorStddevMulThresh',  default = 0.3)
+
 
     declare_camera_model_cmd = DeclareLaunchArgument(
         'camera_model',
@@ -120,6 +139,82 @@ def generate_launch_description():
         default_value=monoResolution,
         description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
 
+    declare_fps_cmd = DeclareLaunchArgument(
+        'fps',
+        default_value=fps,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_publishPointcloud_cmd = DeclareLaunchArgument(
+        'publishPointcloud',
+        default_value=publishPointcloud,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_colorPointcloud_cmd = DeclareLaunchArgument(
+        'colorPointcloud',
+        default_value=colorPointcloud,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_useVoxelFilter_cmd = DeclareLaunchArgument(
+        'useVoxelFilter',
+        default_value=useVoxelFilter,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_voxelLeafX_cmd = DeclareLaunchArgument(
+        'voxelLeafX',
+        default_value=voxelLeafX,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_voxelLeafY_cmd = DeclareLaunchArgument(
+        'voxelLeafY',
+        default_value=voxelLeafY,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_voxelLeafZ_cmd = DeclareLaunchArgument(
+        'voxelLeafZ',
+        default_value=voxelLeafZ,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_minPointsPerVoxel_cmd = DeclareLaunchArgument(
+        'minPointsPerVoxel',
+        default_value=minPointsPerVoxel,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_voxelFilterFieldName_cmd = DeclareLaunchArgument(
+        'voxelFilterFieldName',
+        default_value=voxelFilterFieldName,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_voxelFilterMinLimit_cmd = DeclareLaunchArgument(
+        'voxelFilterMinLimit',
+        default_value=voxelFilterMinLimit,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_voxelFilterMaxLimit_cmd = DeclareLaunchArgument(
+        'voxelFilterMaxLimit',
+        default_value=voxelFilterMaxLimit,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_useSorFilter_cmd = DeclareLaunchArgument(
+        'useSorFilter',
+        default_value=useSorFilter,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_sorKeepOrganized_cmd = DeclareLaunchArgument(
+        'sorKeepOrganized',
+        default_value=sorKeepOrganized,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_sorMeanK_cmd = DeclareLaunchArgument(
+        'sorMeanK',
+        default_value=sorMeanK,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+    declare_sorStddevMulThresh_cmd = DeclareLaunchArgument(
+        'sorStddevMulThresh',
+        default_value=sorStddevMulThresh,
+        description='Contains the resolution of the Mono Cameras. Available resolutions are 800p, 720p & 400p for OAK-D & 480p for OAK-D-Lite.')
+
+
     urdf_launch = IncludeLaunchDescription(
                             launch_description_sources.PythonLaunchDescriptionSource(
                                     os.path.join(urdf_launch_dir, 'urdf_launch.py')),
@@ -144,7 +239,22 @@ def generate_launch_description():
                         {'subpixel': subpixel},
                         {'confidence': confidence},
                         {'LRchecktresh': LRchecktresh},
-                        {'monoResolution': monoResolution}])
+                        {'monoResolution': monoResolution},
+                        {'fps': fps},
+                        {'publishPointcloud': publishPointcloud},
+                        {'colorPointcloud': colorPointcloud},
+                        {'useVoxelFilter': useVoxelFilter},
+                        {'voxelLeafX': voxelLeafX},
+                        {'voxelLeafY': voxelLeafY},
+                        {'voxelLeafZ': voxelLeafZ},
+                        {'minPointsPerVoxel': minPointsPerVoxel},
+                        {'voxelFilterFieldName': voxelFilterFieldName},
+                        {'voxelFilterMinLimit': voxelFilterMinLimit},
+                        {'voxelFilterMaxLimit': voxelFilterMaxLimit},
+                        {'useSorFilter': useSorFilter},
+                        {'sorKeepOrganized': sorKeepOrganized},
+                        {'sorMeanK': sorMeanK},
+                        {'sorStddevMulThresh': sorStddevMulThresh}])
 
 
     metric_converter_node = launch_ros.actions.ComposableNodeContainer(
@@ -210,6 +320,24 @@ def generate_launch_description():
     ld.add_action(declare_confidence_cmd)
     ld.add_action(declare_LRchecktresh_cmd)
     ld.add_action(declare_monoResolution_cmd)
+    ld.add_action(declare_fps_cmd)
+
+    ld.add_action(declare_publishPointcloud_cmd)
+    ld.add_action(declare_colorPointcloud_cmd)
+
+    ld.add_action(declare_useVoxelFilter_cmd)
+    ld.add_action(declare_voxelLeafX_cmd)
+    ld.add_action(declare_voxelLeafY_cmd)
+    ld.add_action(declare_voxelLeafZ_cmd)
+    ld.add_action(declare_minPointsPerVoxel_cmd)
+    ld.add_action(declare_voxelFilterFieldName_cmd)
+    ld.add_action(declare_voxelFilterMinLimit_cmd)
+    ld.add_action(declare_voxelFilterMaxLimit_cmd)
+
+    ld.add_action(declare_useSorFilter_cmd)
+    ld.add_action(declare_sorKeepOrganized_cmd)
+    ld.add_action(declare_sorMeanK_cmd)
+    ld.add_action(declare_sorStddevMulThresh_cmd)
 
     ld.add_action(stereo_node)
     ld.add_action(urdf_launch)
